@@ -7,47 +7,47 @@ import time
 
 
 def init_chat(prompt):
-    config_list1=[
-            {
-                "model": "google/gemma-2-9b-it:free",
-                "base_url": "https://openrouter.ai/api/v1",
-                "api_key": "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",
-                "price" : [0,0]
-            }
-        ]
+    config_list1 = [
+        {
+            "model": "google/gemma-2-9b-it:free",
+            "base_url": "https://openrouter.ai/api/v1",
+            "api_key": "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",
+            "price": [0, 0]
+        }
+    ]
 
-    config_list2=[
-            {
-                "model": "qwen/qwen-vl-plus:free",
-                "base_url": "https://openrouter.ai/api/v1",
-                "api_key": "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",
-                "price" : [0,0]
-            }
-        ]
-    
-    config_list3=[
-            {
-                "model": "meta-llama/llama-3.3-70b-instruct:free",
-                "base_url": "https://openrouter.ai/api/v1",
-                "api_key": "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",
-                "price" : [0,0]
-            }
-        ]
-    
-    config_list4=[
-            {
-                "model": "deepseek/deepseek-r1-distill-llama-70b:free",
-                "base_url": "https://openrouter.ai/api/v1",
-                "api_key": "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",
-                "price" : [0,0]
-            }
-        ]
+    config_list2 = [
+        {
+            "model": "qwen/qwq-32b:free",
+            "base_url": "https://openrouter.ai/api/v1",
+            "api_key": "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",
+            "price": [0, 0]
+        }
+    ]
+
+    config_list3 = [
+        {
+            "model": "meta-llama/llama-3.3-70b-instruct:free",
+            "base_url": "https://openrouter.ai/api/v1",
+            "api_key": "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",
+            "price": [0, 0]
+        }
+    ]
+
+    config_list4 = [
+        {
+            "model": "deepseek/deepseek-r1-distill-llama-70b:free",
+            "base_url": "https://openrouter.ai/api/v1",
+            "api_key": "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",
+            "price": [0, 0]
+        }
+    ]
 
     llm_config1 = {"config_list": config_list1}
     llm_config2 = {"config_list": config_list2}
     llm_config3 = {"config_list": config_list3}
     llm_config4 = {"config_list": config_list4}
-    
+
     init = UserProxyAgent(
         name="Init",
         system_message="Initiator. Start the conversation.",
@@ -106,7 +106,7 @@ When you find an answer, verify the answer carefully. Include verifiable evidenc
 
     def state_transition(last_speaker, groupchat):
         messages = groupchat.messages
-        
+
         def coder(prev=None):
             random.shuffle(coders)
             return coders[0]
@@ -127,42 +127,44 @@ When you find an answer, verify the answer carefully. Include verifiable evidenc
             else:
                 return coder()
 
-    groupchat = GroupChat(agents=agents, messages=[], max_round=11, speaker_selection_method=state_transition,)
+    groupchat = GroupChat(agents=agents, messages=[], max_round=11,
+                          speaker_selection_method=state_transition,)
     manager = GroupChatManager(groupchat=groupchat, llm_config=llm_config2)
 
     init.initiate_chat(
-        manager, message = prompt
+        manager, message=prompt
     )
 
 
-def capture_output(func, args, args2, timeout=1200):
+def capture_output(args):
+    func = init_chat
     buffer = io.StringIO()
     sys_stdout = sys.stdout
     sys.stdout = buffer
-    
+
     def target():
         try:
-            func(args, args2)
+            func(args)
         except Exception as e:
             raise e
-    
+
     thread = threading.Thread(target=target)
     thread.start()
-    thread.join(timeout)
-    
+    thread.join(360)
+
     if thread.is_alive():
-        raise TimeoutError(f"Function execution exceeded {timeout} seconds.")
-    
+        raise TimeoutError(f"Function execution exceeded {360} seconds.")
+
     sys.stdout = sys_stdout
     return buffer.getvalue()
 
 
-
 def main():
     prompt = "from typing import List\n\n\ndef has_close_elements(numbers: List[float], threshold: float) -> bool:\n    \"\"\" Check if in given list of numbers, are any two numbers closer to each other than\n    given threshold.\n    >>> has_close_elements([1.0, 2.0, 3.0], 0.5)\n    False\n    >>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)\n    True\n    \"\"\"\n"
-    init_chat(prompt)
-    # output = capture_output(init_chat, prompt)
-    # print("Output:", output)
+    # init_chat(prompt)
+    output = capture_output(prompt)
+    print("Output:", output)
+
 
 if __name__ == "__main__":
     main()
