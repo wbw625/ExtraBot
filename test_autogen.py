@@ -81,22 +81,22 @@ If the result indicates there is an error, fix the error and output the code aga
 When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible.
 """
     coder1 = AssistantAgent(
-        name="Coder 1",
+        name="Coder_1",
         system_message=code_writer_system_message,
         llm_config=llm_config1,
     )
     coder2 = AssistantAgent(
-        name="Coder 2",
+        name="Coder_2",
         system_message=code_writer_system_message,
         llm_config=llm_config2,
     )
     coder3 = AssistantAgent(
-        name="Coder 3",
+        name="Coder_3",
         system_message=code_writer_system_message,
         llm_config=llm_config3,
     )
     pm = AssistantAgent(
-        name="Product manager",
+        name="Product_manager",
         system_message='''You are an expert product manager that is creative in coding ideas. Additionally, ensure that the code is complete, runnable, and has "# filename: <filename>" inside the code blocks as the first line.''',
         llm_config=llm_config4,
     )
