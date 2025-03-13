@@ -2,27 +2,75 @@ document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
     const chatMessages = document.getElementById('chat-messages');
+    const configModal = document.getElementById('configModal');
     let isGenerating = false;
+    let agentsConfig = [];
+    let modelsConfig = [];
 
-    // 自动调整输入框高度
+    // 初始化配置弹窗
+    const agentConfigs = document.getElementById('agentConfigs');
+    for (let i = 0; i < 6; i++) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <select class="agent-type" data-index="${i}">
+                    <option value="none">none</option>
+                    <option value="coder">coder</option>
+                    <option value="product_manager">product_manager</option>
+                    <option value="guardian">guardian</option>
+                </select>
+            </td>
+            <td>
+                <select class="model-select" data-index="${i}" ${i === 0 ? '' : 'disabled'}>
+                    <option value="none">none</option>
+                    <option value="llama">llama</option>
+                    <option value="qwen">qwen</option>
+                    <option value="deepseek" selected>deepseek</option>
+                    <option value="mistralai">mistralai</option>
+                    <option value="gemma">gemma</option>
+                </select>
+            </td>
+        `;
+        agentConfigs.appendChild(row);
+    }
+
+    // Agent类型变化事件
+    agentConfigs.addEventListener('change', (e) => {
+        if (e.target.classList.contains('agent-type')) {
+            const index = e.target.dataset.index;
+            const modelSelect = document.querySelector(`.model-select[data-index="${index}"]`);
+            if (e.target.value === 'none') {
+                modelSelect.value = 'none';
+                modelSelect.disabled = true;
+            } else {
+                modelSelect.disabled = false;
+                if (modelSelect.value === 'none') {
+                    modelSelect.value = 'deepseek';
+                }
+            }
+        }
+    });
+
+    // 确认配置
+    document.getElementById('confirmConfig').addEventListener('click', () => {
+        agentsConfig = [];
+        modelsConfig = [];
+        document.querySelectorAll('.agent-type').forEach((select, index) => {
+            agentsConfig.push(select.value);
+            modelsConfig.push(document.querySelector(`.model-select[data-index="${index}"]`).value);
+        });
+        agentsConfig.push('user_proxy');
+        modelsConfig.push('none');
+        configModal.style.display = 'none';
+    });
+
+    // 输入框自适应高度
     input.addEventListener('input', () => {
         input.style.height = 'auto';
         input.style.height = input.scrollHeight + 'px';
     });
 
-    // 回车发送（Shift+Enter换行）
-    input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey && !isGenerating) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
-
-    // 发送按钮点击事件
-    sendBtn.addEventListener('click', (e) => {
-        if (!isGenerating) sendMessage();
-    });
-
+    // 发送消息
     async function sendMessage() {
         const message = input.value.trim();
         if (!message || isGenerating) return;
@@ -33,147 +81,107 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInput();
         addUserMessage(message);
 
-        const eventSource = new EventSource(`/stream?message=${encodeURIComponent(message)}`);
+        const params = new URLSearchParams({
+            message: message,
+            agents: JSON.stringify(agentsConfig),
+            models: JSON.stringify(modelsConfig)
+        });
+
+        const eventSource = new EventSource(`/stream?${params.toString()}`);
         let currentSpeaker = null;
         let currentMessageElement = null;
 
         eventSource.onmessage = (event) => {
-            try {
-                // 处理结束信号
-                if (event.data.trim() === '' || event.event === 'end') {
-                    eventSource.close();
-                    return;
-                }
+            if (event.data.trim() === '') return;
 
+            try {
                 const data = JSON.parse(event.data);
                 
-                // 处理新发言人
                 if (data.speaker !== currentSpeaker) {
                     currentSpeaker = data.speaker;
-                    currentMessageElement = createBotMessageElement(data.speaker);
+                    currentMessageElement = createBotMessage(currentSpeaker);
                     chatMessages.appendChild(currentMessageElement);
                 }
 
-                // 追加内容
                 if (currentMessageElement) {
                     const contentDiv = currentMessageElement.querySelector('.message-content');
                     contentDiv.innerHTML += escapeHtml(data.content).replace(/\n/g, '<br>');
                     scrollToBottom();
                 }
             } catch (error) {
-                console.error('Error parsing event:', error);
+                console.error('解析错误:', error);
             }
         };
+
+        eventSource.addEventListener('end', () => {
+            eventSource.close();
+            resetUI();
+            addSystemMessage('对话结束');
+        });
 
         eventSource.onerror = () => {
             eventSource.close();
-            addSystemMessage('对话已结束');
             resetUI();
+            addSystemMessage('连接中断');
         };
 
-        // 添加超时处理
+        // 6分钟超时
         setTimeout(() => {
             if (isGenerating) {
                 eventSource.close();
-                addSystemMessage('响应超时，请重试');
                 resetUI();
+                addSystemMessage('响应超时');
             }
-        }, 360000); // 6分钟超时
+        }, 360000);
     }
 
-    // 工具函数：创建用户消息
+    // 工具函数
     function addUserMessage(content) {
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message user-message';
-        
-        const avatar = createAvatarElement('user');
-        const wrapper = createMessageWrapper('You', content);
-        
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(wrapper);
-        chatMessages.appendChild(messageDiv);
-        scrollToBottom();
-    }
-
-    // 工具函数：创建机器人消息元素
-    function createBotMessageElement(speaker) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message ai-message';
-        messageDiv.style.opacity = '0';
-        messageDiv.style.transform = 'translateY(10px)';
-
-        const avatar = createAvatarElement('bot', speaker);
-        const wrapper = createMessageWrapper(speaker, '');
-
-        messageDiv.appendChild(avatar);
-        messageDiv.appendChild(wrapper);
-
-        // 添加渐入动画
-        setTimeout(() => {
-            messageDiv.style.opacity = '1';
-            messageDiv.style.transform = 'translateY(0)';
-        }, 10);
-
-        return messageDiv;
-    }
-
-    // 工具函数：创建头像
-    function createAvatarElement(type, speaker) {
-        const avatar = document.createElement('div');
-        avatar.className = `avatar ${type}-avatar`;
-
-        if (type === 'bot') {
-            const icon = document.createElement('i');
-            icon.className = 'fas fa-robot';
-            avatar.appendChild(icon);
-        } else {
-            avatar.textContent = 'You';
-        }
-
-        return avatar;
-    }
-
-    // 工具函数：创建消息包装
-    function createMessageWrapper(username, content) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'message-wrapper';
-
-        const usernameDiv = document.createElement('div');
-        usernameDiv.className = 'username';
-        usernameDiv.textContent = username;
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'message-content';
-        contentDiv.innerHTML = escapeHtml(content).replace(/\n/g, '<br>');
-
-        wrapper.appendChild(usernameDiv);
-        wrapper.appendChild(contentDiv);
-        return wrapper;
-    }
-
-    // 工具函数：添加系统消息
-    function addSystemMessage(content) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = 'message system-message';
         messageDiv.innerHTML = `
-            <div class="message-content">${content}</div>
+            <div class="avatar user-avatar">You</div>
+            <div class="message-wrapper">
+                <div class="username">You</div>
+                <div class="message-content">${escapeHtml(content)}</div>
+            </div>
         `;
         chatMessages.appendChild(messageDiv);
         scrollToBottom();
     }
 
-    // 工具函数：滚动到底部
-    function scrollToBottom() {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+    function createBotMessage(speaker) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message ai-message';
+        messageDiv.style.opacity = '0';
+        messageDiv.style.transform = 'translateY(10px)';
+        messageDiv.innerHTML = `
+            <div class="avatar bot-avatar"><i class="fas fa-robot"></i></div>
+            <div class="message-wrapper">
+                <div class="username">${escapeHtml(speaker)}</div>
+                <div class="message-content"></div>
+            </div>
+        `;
+        setTimeout(() => {
+            messageDiv.style.opacity = '1';
+            messageDiv.style.transform = 'none';
+        }, 10);
+        return messageDiv;
     }
 
-    // 工具函数：清空输入框
+    function addSystemMessage(content) {
+        const div = document.createElement('div');
+        div.className = 'message system-message';
+        div.innerHTML = `<div class="message-content">${escapeHtml(content)}</div>`;
+        chatMessages.appendChild(div);
+        scrollToBottom();
+    }
+
     function clearInput() {
         input.value = '';
         input.style.height = 'auto';
     }
 
-    // 工具函数：重置UI状态
     function resetUI() {
         isGenerating = false;
         input.disabled = false;
@@ -181,13 +189,25 @@ document.addEventListener('DOMContentLoaded', () => {
         input.focus();
     }
 
-    // 工具函数：HTML转义
-    function escapeHtml(unsafe) {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
+
+    function escapeHtml(text) {
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    // 事件监听
+    sendBtn.addEventListener('click', sendMessage);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
 });

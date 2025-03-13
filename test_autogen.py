@@ -6,7 +6,10 @@ import threading
 import time
 
 
-def init_chat(prompt):
+def init_chat(params):
+    prompt = params["prompt"]
+    # agent = params["agents"]
+    # model = params["models"]
     config_list1 = [
         {
             "model": "google/gemma-2-9b-it:free",

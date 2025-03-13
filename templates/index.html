@@ -1,5 +1,51 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+    <style>
+        /* 配置弹窗样式 */
+        .config-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+    
+        .config-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+    
+        .config-table {
+            width: 100%;
+            margin: 10px 0;
+        }
+    
+        .config-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+    
+        .config-table select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+    
+        .config-footer {
+            text-align: right;
+            margin-top: 15px;
+        }
+    </style>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,6 +54,36 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
+    <!-- 配置弹窗 -->
+    <div class="config-modal" id="configModal">
+        <div class="config-content">
+            <h3>配置智能体参数</h3>
+            <table class="config-table">
+                <tr>
+                    <th>Agent 类型</th>
+                    <th>模型选择</th>
+                </tr>
+                <tbody id="agentConfigs">
+                    <!-- 动态生成6行配置 -->
+                </tbody>
+                <tr>
+                    <td>
+                        <select disabled>
+                            <option>user_proxy</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select disabled>
+                            <option>none</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+            <div class="config-footer">
+                <button id="confirmConfig">确认配置</button>
+            </div>
+        </div>
+    </div>
     <div class="chat-container">
         <div class="chat-header">
             <h1>Multi-Agent Coding System</h1>
