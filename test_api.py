@@ -25,7 +25,7 @@ def get_response(model="qwen/qwen-vl-plus:free", system_prompt="You are a helpfu
 
 
 if __name__ == "__main__":
-    # model = "qwen/qwen-vl-plus:free"
+    # model = "qwen/qwq-32b:free"
     # model = "meta-llama/llama-3.3-70b-instruct:free"
     model = "deepseek/deepseek-r1-distill-llama-70b:free"
     # model = "mistralai/mistral-7b-instruct:free"

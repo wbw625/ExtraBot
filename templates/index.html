@@ -5,26 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExtraBot</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <h1>ExtraBot</h1>
+            <h1>Multi-Agent Coding System</h1>
         </div>
-        <!-- 在chat-messages区域修改初始消息 -->
         <div class="chat-messages" id="chat-messages">
             <div class="message ai-message">
-                <div class="avatar bot-avatar">Bot</div>
+                <div class="avatar bot-avatar"><i class="fas fa-robot"></i></div>
                 <div class="message-wrapper">
                     <div class="username">AI Assistant</div>
-                    <div class="message-content">
-                        您好！我是AI助手，有什么可以帮您的？
-                    </div>
+                    <div class="message-content">您好！多角色对话系统已就绪，请输入您的需求。</div>
                 </div>
             </div>
         </div>
         <div class="input-area">
-            <textarea id="user-input" placeholder="输入您的问题..." rows="1"></textarea>
+            <textarea id="user-input" placeholder="输入您的需求..." rows="1"></textarea>
             <button id="send-btn">发送</button>
         </div>
     </div>
