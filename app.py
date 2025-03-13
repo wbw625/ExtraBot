@@ -2,33 +2,41 @@ from flask import Flask, render_template, request, Response
 import re
 import json
 import threading
-import io
 import sys
+from queue import Queue, Empty
 from test_autogen import init_chat
 
 app = Flask(__name__)
 
-def capture_output(args):
-    func = init_chat
-    buffer = io.StringIO()
-    sys_stdout = sys.stdout
-    sys.stdout = buffer
+class StreamCapture:
+    def __init__(self):
+        self.queue = Queue()
+        self.original_stdout = sys.stdout
+        self.lock = threading.Lock()
 
-    def target():
+    def write(self, text):
+        with self.lock:
+            self.original_stdout.write(text)  # 保持控制台输出
+            self.queue.put(text)
+    
+    def flush(self):
+        self.original_stdout.flush()
+
+def capture_output_stream(args):
+    capture = StreamCapture()
+    sys.stdout = capture
+
+    def run_init_chat():
         try:
-            func(args)
-        except Exception as e:
-            raise e
+            init_chat(args)
+        finally:
+            sys.stdout = capture.original_stdout
+            capture.queue.put(None)  # 结束信号
 
-    thread = threading.Thread(target=target)
+    thread = threading.Thread(target=run_init_chat)
     thread.start()
-    thread.join(360)
 
-    if thread.is_alive():
-        raise TimeoutError(f"Function execution exceeded {360} seconds.")
-
-    sys.stdout = sys_stdout
-    return buffer.getvalue()
+    return capture
 
 @app.route('/')
 def index():
@@ -39,31 +47,52 @@ def stream():
     user_input = request.args.get('message')
     
     def generate():
-        try:
-            full_output = capture_output(user_input)
-            segments = re.split(r'(Next speaker: \S+)', full_output)
-            
-            current_speaker = "AI Assistant"
-            buffer = ""
-            
-            for segment in segments:
-                if segment.startswith("Next speaker: "):
-                    if buffer:
-                        yield f"data: {json.dumps({'speaker': current_speaker, 'content': buffer.strip()})}\n\n"
-                    current_speaker = segment.split(": ")[1].strip()
+        capture = capture_output_stream(user_input)
+        current_speaker = "AI Assistant"
+        buffer = ""
+        speaker_pattern = re.compile(r'Next speaker: (\S+)')
+
+        while True:
+            try:
+                text = capture.queue.get(timeout=360)  # 超时时间360秒
+                if text is None:  # 结束信号
+                    break
+
+                # 分割处理逻辑
+                parts = re.split(r'(Next speaker: \S+)', text)
+                for part in parts:
+                    if not part:
+                        continue
+                    
+                    match = speaker_pattern.match(part)
+                    if match:
+                        if buffer:
+                            yield format_message(current_speaker, buffer)
+                        current_speaker = match.group(1)
+                        buffer = ""
+                    else:
+                        buffer += part
+
+                # 发送当前缓冲区内容
+                if buffer.strip():
+                    yield format_message(current_speaker, buffer)
                     buffer = ""
-                else:
-                    buffer += segment
-            
-            if buffer.strip():
-                yield f"data: {json.dumps({'speaker': current_speaker, 'content': buffer.strip()})}\n\n"
-            
-        except Exception as e:
-            yield f"data: {json.dumps({'speaker': 'System', 'content': f'Error: {str(e)}'})}\n\n"
-        finally:
-            yield "event: end\ndata: \n\n"
+
+            except Empty:
+                yield format_message("System", "响应超时")
+                break
+            except Exception as e:
+                yield format_message("System", f"错误: {str(e)}")
+                break
+
+        if buffer.strip():
+            yield format_message(current_speaker, buffer)
+        yield "event: end\ndata: \n\n"
 
     return Response(generate(), mimetype="text/event-stream")
+
+def format_message(speaker, content):
+    return f"data: {json.dumps({'speaker': speaker, 'content': content.strip()})}\n\n"
 
 if __name__ == '__main__':
     app.run(debug=True)

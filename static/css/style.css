@@ -148,3 +148,18 @@ button:hover {
 i.fa-robot {
     font-size: 1.2rem;
 }
+
+.message-content {
+    overflow: hidden;
+    white-space: pre-wrap;
+}
+
+@keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+}
+
+.typing-effect {
+    display: inline-block;
+    animation: typing 0.1s steps(40, end);
+}
