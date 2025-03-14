@@ -49,37 +49,30 @@ document.addEventListener('DOMContentLoaded', () => {
             const index = e.target.dataset.index;
             const agentSelect = e.target;
             const modelSelect = document.querySelector(`.model-select[data-index="${index}"]`);
+            const originalOptions = modelSelect.querySelectorAll('option'); // 保存原始选项
 
             if (agentSelect.value === 'none') {
-                // 当Agent为none时
+                // 当切换为none时
+                modelSelect.innerHTML = '<option value="none">none</option>'; // 重置选项
                 modelSelect.value = 'none';
                 modelSelect.disabled = true;
             } else {
-                // 当Agent非none时
+                // 当切换为非none时
                 modelSelect.disabled = false;
-                // 如果当前模型是none，自动设置为deepseek
-                if (modelSelect.value === 'none') {
+                // 恢复原始选项（排除none）
+                modelSelect.innerHTML = '<option value="llama">llama</option><option value="qwen">qwen</option><option value="deepseek" selected>deepseek</option><option value="mistralai">mistralai</option><option value="gemma">gemma</option>';
+                // originalOptions.forEach(option => {
+                //     if (option.value !== 'none') {
+                //         modelSelect.appendChild(option.cloneNode(true));
+                //     }
+                // });
+                // 设置默认值并检查当前值
+                if (!modelSelect.value || modelSelect.value === 'none') {
                     modelSelect.value = 'deepseek';
                 }
-                // 移除none选项
-                const noneOption = modelSelect.querySelector('option[value="none"]');
-                if (noneOption) noneOption.remove();
-            }
-        }
-
-        if (e.target.classList.contains('model-select')) {
-            const index = e.target.dataset.index;
-            const agentSelect = document.querySelector(`.agent-type[data-index="${index}"]`);
-            const modelSelect = e.target;
-
-            // 模型选择验证
-            if (agentSelect.value !== 'none' && modelSelect.value === 'none') {
-                alert('Agent类型非none时不能选择none模型！');
-                modelSelect.value = 'deepseek';
             }
         }
     });
-
     // 确认配置
     document.getElementById('confirmConfig').addEventListener('click', () => {
         // 验证所有配置

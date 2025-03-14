@@ -8,9 +8,13 @@ import time
 
 def init_chat(params):
     prompt = params["prompt"]
-    # agent = params["agents"]
-    # model = params["models"]
-    config_list1 = [
+    agent_list = params["agents"]
+    model_list = params["models"]
+
+    if len(agent_list) != 7 or len(model_list) != 7:
+        raise ValueError("Number of agents and models should be 6.")
+
+    config_list_gemma = [
         {
             "model": "google/gemma-2-9b-it:free",
             "base_url": "https://openrouter.ai/api/v1",
@@ -19,7 +23,7 @@ def init_chat(params):
         }
     ]
 
-    config_list2 = [
+    config_list_qwen = [
         {
             "model": "qwen/qwq-32b:free",
             "base_url": "https://openrouter.ai/api/v1",
@@ -28,7 +32,7 @@ def init_chat(params):
         }
     ]
 
-    config_list3 = [
+    config_list_llama = [
         {
             "model": "meta-llama/llama-3.3-70b-instruct:free",
             "base_url": "https://openrouter.ai/api/v1",
@@ -37,7 +41,7 @@ def init_chat(params):
         }
     ]
 
-    config_list4 = [
+    config_list_deepseek = [
         {
             "model": "deepseek/deepseek-r1-distill-llama-70b:free",
             "base_url": "https://openrouter.ai/api/v1",
@@ -46,10 +50,20 @@ def init_chat(params):
         }
     ]
 
-    llm_config1 = {"config_list": config_list1}
-    llm_config2 = {"config_list": config_list2}
-    llm_config3 = {"config_list": config_list3}
-    llm_config4 = {"config_list": config_list4}
+    config_list_mistral = [
+        {
+            "model": "mistralai/mistral-7b-instruct:free",
+            "base_url": "https://openrouter.ai/api/v1",
+            "api_key": "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",
+            "price": [0, 0]
+        }
+    ]
+
+    llm_config_llama = {"config_list": config_list_llama}
+    llm_config_qwen = {"config_list": config_list_qwen}
+    llm_config_gemma = {"config_list": config_list_gemma}
+    llm_config_deepseek = {"config_list": config_list_deepseek}
+    llm_config_mistral = {"config_list": config_list_mistral}
 
     init = UserProxyAgent(
         name="Init",
@@ -83,56 +97,100 @@ Put "# filename: <filename>" inside every code blocks as the first line. Don't i
 If the result indicates there is an error, fix the error and output the code again. Suggest the full code instead of partial code or code changes. If the error can't be fixed or if the task is not solved even after the code is executed successfully, analyze the problem, revisit your assumption, collect additional info you need, and think of a different approach to try.
 When you find an answer, verify the answer carefully. Include verifiable evidence in your response if possible.
 """
-    coder1 = AssistantAgent(
-        name="Coder_1",
-        system_message=code_writer_system_message,
-        llm_config=llm_config1,
-    )
-    coder2 = AssistantAgent(
-        name="Coder_2",
-        system_message=code_writer_system_message,
-        llm_config=llm_config2,
-    )
-    coder3 = AssistantAgent(
-        name="Coder_3",
-        system_message=code_writer_system_message,
-        llm_config=llm_config3,
-    )
-    pm = AssistantAgent(
-        name="Product_manager",
-        system_message='''You are an expert product manager that is creative in coding ideas. Additionally, ensure that the code is complete, runnable, and has "# filename: <filename>" inside the code blocks as the first line.''',
-        llm_config=llm_config4,
-    )
 
-    agents = [user_proxy, coder1, coder2, coder3, pm]
-    coders = [agents[1], agents[2], agents[3]]
+    guardian_system_message = """
+You are a guardrails agent and are tasked with ensuring that all parties adhere to the following responsible AI policies:
+
+  - You MUST TERMINATE the conversation if it involves writing or running HARMFUL or DESTRUCTIVE code.
+  - You MUST TERMINATE the conversation if it involves discussions of anything relating to hacking, computer exploits, or computer security.
+  - You MUST TERMINATE the conversation if it involves violent or graphic content such as Harm to Others, Self-Harm, Suicide.
+  - You MUST TERMINATE the conversation if it involves demeaning speech, hate speech, discriminatory remarks, or any form of harassment based on race, gender, sexuality, religion, nationality, disability, or any other protected characteristic.
+  - You MUST TERMINATE the conversation if if it involves seeking or giving  advice in highly regulated domains such as medical advice, mental health, legal advice or financial advice
+  - You MUST TERMINATE the conversation if it involves illegal activities including when encouraging or providing guidance on illegal activities.
+  - You MUST TERMINATE the conversation if it involves manipulative or deceptive Content including scams, phishing and spread false information.
+  - You MUST TERMINATE the conversation if it involves involve sexually explicit content or discussions.
+  - You MUST TERMINATE the conversation if it involves sharing or soliciting personal, sensitive, or confidential information from users. This includes financial details, health records, and other private matters.
+  - You MUST TERMINATE the conversation if it involves deep personal problems such as dealing with serious personal issues, mental health concerns, or crisis situations.
+
+If you decide that the conversation must be terminated, explain your reasoning then output the uppercase word "TERMINATE". If, on the other hand, you decide the conversation is acceptable by the above standards, indicate as much, then ask the other parties to proceed.
+"""
+
+    pm_system_message = """
+You are an expert product manager that is creative in coding ideas. Additionally, ensure that the code is complete, runnable, and has "# filename: <filename>" inside the code blocks as the first line.
+"""
+
+    # coder1 = AssistantAgent(
+    #     name="Coder_1",
+    #     system_message=code_writer_system_message,
+    #     llm_config=llm_config_llama,
+    # )
+    # coder2 = AssistantAgent(
+    #     name="Coder_2",
+    #     system_message=code_writer_system_message,
+    #     llm_config=llm_config_llama,
+    # )
+    # coder3 = AssistantAgent(
+    #     name="Coder_3",
+    #     system_message=code_writer_system_message,
+    #     llm_config=llm_config_llama,
+    # )
+    # pm = AssistantAgent(
+    #     name="Product_manager",
+    #     system_message=pm_system_message,
+    #     llm_config=llm_config_llama,
+    # )
+
+    # agents = [user_proxy, coder1, coder2, coder3, pm]
+
+    agents = [user_proxy]
+    cnt = 0
+    coder_cnt = 0
+    pm_cnt = 0
+    guardian_cnt = 0
+
+    for agent, model in zip(agent_list, model_list):
+        if agent == "user_proxy":
+            break
+        elif agent == "coder":
+            coder_cnt += 1
+            cnt += 1
+            agents.append(AssistantAgent(
+                name=f"Coder{coder_cnt}({model})",
+                system_message=code_writer_system_message,
+                llm_config=locals()[f"llm_config_{model}"]
+            ))
+        elif agent == "product_manager":
+            pm_cnt += 1
+            cnt += 1
+            agents.append(AssistantAgent(
+                name=f"Product_manager{pm_cnt}({model})",
+                system_message=pm_system_message,
+                llm_config=locals()[f"llm_config_{model}"]
+            ))
+        elif agent == "guardian":
+            guardian_cnt += 1
+            cnt += 1
+            agents.append(AssistantAgent(
+                name=f"Guardian{guardian_cnt}({model})",
+                system_message=guardian_system_message,
+                llm_config=locals()[f"llm_config_{model}"]
+            ))
+
 
     def state_transition(last_speaker, groupchat):
+        length = len(agents)
         messages = groupchat.messages
 
-        def coder(prev=None):
-            random.shuffle(coders)
-            return coders[0]
-
         if last_speaker is init:
-            return coder()
-        elif last_speaker is coders[0]:
-            return coders[1]
-        elif last_speaker is coders[1]:
-            return coders[2]
-        elif last_speaker is coders[2]:
-            return pm
-        elif last_speaker is pm:
-            return user_proxy
-        elif last_speaker is user_proxy:
-            if messages[-1]["content"] == "exitcode: 1":
-                return coder()
-            else:
-                return coder()
+            return agents[1]
+        for _ in range(length):
+            if last_speaker is agents[_]:
+                return agents[(_+1)%length]
+        return user_proxy
 
-    groupchat = GroupChat(agents=agents, messages=[], max_round=11,
-                          speaker_selection_method=state_transition,)
-    manager = GroupChatManager(groupchat=groupchat, llm_config=llm_config2)
+    round = 2
+    groupchat = GroupChat(agents=agents, messages=[], max_round=round*(len(agents))+1 , speaker_selection_method=state_transition)
+    manager = GroupChatManager(groupchat=groupchat, llm_config=llm_config_llama)
 
     init.initiate_chat(
         manager, message=prompt
