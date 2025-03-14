@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </select>
             </td>
             <td>
-                <select class="model-select" data-index="${i}" ${i === 0 ? '' : 'disabled'}>
+                <select class="model-select" data-index="${i}">
                     <option value="none">none</option>
                     <option value="llama">llama</option>
                     <option value="qwen">qwen</option>
@@ -34,31 +34,83 @@ document.addEventListener('DOMContentLoaded', () => {
         agentConfigs.appendChild(row);
     }
 
+    // 初始化模型选择状态
+    document.querySelectorAll('.agent-type').forEach((select, index) => {
+        const modelSelect = document.querySelector(`.model-select[data-index="${index}"]`);
+        if (select.value === 'none') {
+            modelSelect.value = 'none';
+            modelSelect.disabled = true;
+        }
+    });
+
     // Agent类型变化事件
     agentConfigs.addEventListener('change', (e) => {
         if (e.target.classList.contains('agent-type')) {
             const index = e.target.dataset.index;
+            const agentSelect = e.target;
             const modelSelect = document.querySelector(`.model-select[data-index="${index}"]`);
-            if (e.target.value === 'none') {
+
+            if (agentSelect.value === 'none') {
+                // 当Agent为none时
                 modelSelect.value = 'none';
                 modelSelect.disabled = true;
             } else {
+                // 当Agent非none时
                 modelSelect.disabled = false;
+                // 如果当前模型是none，自动设置为deepseek
                 if (modelSelect.value === 'none') {
                     modelSelect.value = 'deepseek';
                 }
+                // 移除none选项
+                const noneOption = modelSelect.querySelector('option[value="none"]');
+                if (noneOption) noneOption.remove();
+            }
+        }
+
+        if (e.target.classList.contains('model-select')) {
+            const index = e.target.dataset.index;
+            const agentSelect = document.querySelector(`.agent-type[data-index="${index}"]`);
+            const modelSelect = e.target;
+
+            // 模型选择验证
+            if (agentSelect.value !== 'none' && modelSelect.value === 'none') {
+                alert('Agent类型非none时不能选择none模型！');
+                modelSelect.value = 'deepseek';
             }
         }
     });
 
     // 确认配置
     document.getElementById('confirmConfig').addEventListener('click', () => {
+        // 验证所有配置
+        let isValid = true;
+        
+        document.querySelectorAll('.agent-type').forEach((select, index) => {
+            const agent = select.value;
+            const model = document.querySelector(`.model-select[data-index="${index}"]`).value;
+
+            if (agent !== 'none' && model === 'none') {
+                isValid = false;
+                select.classList.add('error');
+            } else {
+                select.classList.remove('error');
+            }
+        });
+
+        if (!isValid) {
+            alert('存在无效配置：Agent类型非none时必须选择模型！');
+            return;
+        }
+
+        // 收集有效配置
         agentsConfig = [];
         modelsConfig = [];
         document.querySelectorAll('.agent-type').forEach((select, index) => {
             agentsConfig.push(select.value);
             modelsConfig.push(document.querySelector(`.model-select[data-index="${index}"]`).value);
         });
+
+        // 添加第7个固定配置
         agentsConfig.push('user_proxy');
         modelsConfig.push('none');
         configModal.style.display = 'none';
