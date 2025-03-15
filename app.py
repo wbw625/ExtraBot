@@ -190,6 +190,13 @@ def stream():
 def format_message(speaker, content):
     return f"data: {json.dumps({'speaker': speaker, 'content': content.strip()})}\n\n"
 
+@app.context_processor
+def inject_user():
+    user = None
+    if 'user_id' in session:
+        user = User.query.get(session['user_id'])
+    return dict(current_user=user)
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
