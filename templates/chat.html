@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExtraBot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- 配置弹窗 -->
+    <div class="config-modal" id="configModal">
+        <div class="config-content">
+            <h3>配置智能体参数</h3>
+            <div class="global-config-row">
+                <label>最大对话轮数：</label>
+                <select id="maxTurns">
+                    <option value="1">1</option>
+                    <option value="2"selected>2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+            </div>
+            <table class="config-table">
+                <tr>
+                    <th>Agent 类型</th>
+                    <th>模型选择</th>
+                </tr>
+                <tbody id="agentConfigs">
+                    <!-- 动态生成6行配置 -->
+                </tbody>
+                <tr>
+                    <td>
+                        <select disabled>
+                            <option>user_proxy</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select disabled>
+                            <option>none</option>
+                        </select>
+                    </td>
+                </tr>
+            </table>
+            <div class="config-footer">
+                <button id="confirmConfig">确认配置</button>
+            </div>
+        </div>
+    </div>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Multi-Agent Coding System</h1>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message ai-message">
+                <div class="avatar bot-avatar"><i class="fas fa-robot"></i></div>
+                <div class="message-wrapper">
+                    <div class="username">AI Assistant</div>
+                    <div class="message-content">您好！多角色对话系统已就绪，请输入您的需求。</div>
+                </div>
+            </div>
+        </div>
+        <div class="input-area">
+            <textarea id="user-input" placeholder="输入您的需求..." rows="1"></textarea>
+            <button id="send-btn">发送</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+{% endblock %}

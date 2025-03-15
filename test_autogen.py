@@ -64,7 +64,7 @@ def init_chat(params):
     llm_config_qwen = {"config_list": config_list_qwen}
     llm_config_gemma = {"config_list": config_list_gemma}
     llm_config_deepseek = {"config_list": config_list_deepseek}
-    llm_config_mistral = {"config_list": config_list_mistral}
+    llm_config_mistralai = {"config_list": config_list_mistral}
 
     init = UserProxyAgent(
         name="Init",

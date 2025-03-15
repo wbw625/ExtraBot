@@ -184,3 +184,99 @@ i.fa-robot {
     border-radius: 4px;
     width: 120px;
 }
+
+/* 新增认证相关样式 */
+.auth-container {
+    max-width: 400px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+.btn {
+    padding: 10px 20px;
+    background: #10a37f;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.auth-form {
+    max-width: 300px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.auth-form input {
+    display: block;
+    width: 100%;
+    margin: 10px 0;
+    padding: 8px;
+}
+
+nav {
+    background: #202123;
+    padding: 15px;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+}
+
+/* 配置弹窗样式 */
+.config-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.config-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.config-table {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.config-table td {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+}
+
+.config-table select {
+    width: 100%;
+    padding: 6px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.config-footer {
+    text-align: right;
+    margin-top: 15px;
+}
