@@ -49,6 +49,7 @@ def stream():
         user_input = request.args.get('message', '')
         agents = json.loads(request.args.get('agents', '[]'))
         models = json.loads(request.args.get('models', '[]'))
+        max_turns = int(request.args.get('max_turns', '2'))
         
         # 参数验证
         if len(agents) != 7 or len(models) != 7:
@@ -58,7 +59,8 @@ def stream():
         params = {
             'prompt': user_input,
             'agents': agents,
-            'models': models
+            'models': models,
+            'max_turns': max_turns
         }
         
     except Exception as e:

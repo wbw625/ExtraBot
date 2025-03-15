@@ -163,3 +163,24 @@ i.fa-robot {
     display: inline-block;
     animation: typing 0.1s steps(40, end);
 }
+
+/* 新增配置样式 */
+.additional-config {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.additional-config label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.additional-config select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 120px;
+}

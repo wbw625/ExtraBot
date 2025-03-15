@@ -73,6 +73,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    document.getElementById('confirmConfig').addEventListener('click', () => {
+        const maxTurns = parseInt(document.getElementById('maxTurns').value);
+        
+        // 参数验证
+        if (isNaN(maxTurns) || maxTurns < 1 || maxTurns > 5) {
+            alert('聊天轮数必须为1-5之间的整数');
+            return;
+        }
+    
+        // 收集参数时加入max_turns
+        const params = new URLSearchParams({
+            message: message,
+            agents: JSON.stringify(agentsConfig),
+            models: JSON.stringify(modelsConfig),
+            max_turns: maxTurns
+        });
+    });
+
     // 确认配置
     document.getElementById('confirmConfig').addEventListener('click', () => {
         // 验证所有配置
@@ -117,6 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 发送消息
     async function sendMessage() {
+        const maxTurns = parseInt(document.getElementById('maxTurns').value);
         const message = input.value.trim();
         if (!message || isGenerating) return;
 
@@ -129,7 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams({
             message: message,
             agents: JSON.stringify(agentsConfig),
-            models: JSON.stringify(modelsConfig)
+            models: JSON.stringify(modelsConfig),
+            max_turns: maxTurns
         });
 
         const eventSource = new EventSource(`/stream?${params.toString()}`);

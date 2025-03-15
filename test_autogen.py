@@ -10,6 +10,7 @@ def init_chat(params):
     prompt = params["prompt"]
     agent_list = params["agents"]
     model_list = params["models"]
+    max_turns = params["max_turns"]
 
     if len(agent_list) != 7 or len(model_list) != 7:
         raise ValueError("Number of agents and models should be 6.")
@@ -188,7 +189,7 @@ You are an expert product manager that is creative in coding ideas. Additionally
                 return agents[(_+1)%length]
         return user_proxy
 
-    round = 2
+    round = max_turns
     groupchat = GroupChat(agents=agents, messages=[], max_round=round*(len(agents))+1 , speaker_selection_method=state_transition)
     manager = GroupChatManager(groupchat=groupchat, llm_config=llm_config_llama)
 
