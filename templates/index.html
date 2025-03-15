@@ -3,6 +3,17 @@
 <head>
     <title>ExtraBot Home</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            /* 使用线性渐变叠加半透明白色层（透明度50%） */
+            background-image: linear-gradient(rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.5)),
+                              url("{{ url_for('static', filename='images/bg.png') }}");
+            background-size: cover;       /* 覆盖整个页面 */
+            background-position: center;  /* 图片居中 */
+            background-repeat: no-repeat; /* 禁止重复 */
+            min-height: 100vh;            /* 最小高度为视口高度 */
+        }
+    </style>
 </head>
 <body>
     <div class="auth-container">
